@@ -6,11 +6,9 @@ import Loading from './Loading'
 import toast from 'react-hot-toast'
 
 const Credits = () => {
-  const { user, purchaseCreditsLocal } = useAppContext()
+  const { user } = useAppContext()
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState(null)
 
   useEffect(() => {
     // simulate fetch
@@ -20,25 +18,8 @@ const Credits = () => {
 
   if (loading) return <Loading />
 
-  function openBuy(plan) {
-    setSelectedPlan(plan)
-    setShowModal(true)
-  }
-
-  function confirmPurchase() {
-    if (!selectedPlan) {
-      toast.error('Select a plan first')
-      return
-    }
-    const added = Number(selectedPlan.credits || 0)
-    if (added <= 0) {
-      toast.error('Invalid plan')
-      return
-    }
-    const newTotal = purchaseCreditsLocal(added) // simulated purchase
-    toast.success(`Purchased ${added} credits.`)
-    setShowModal(false)
-    setSelectedPlan(null)
+  function openBuy() {
+    toast('Credit purchase will be available in the future!', { icon: '🚀' })
   }
 
   return (
@@ -72,7 +53,7 @@ const Credits = () => {
             </div>
 
             <button
-              onClick={() => openBuy(plan)}
+              onClick={openBuy}
               className='mt-6 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-medium py-2 rounded transition-colors cursor-pointer'
             >
               Buy Now
@@ -81,27 +62,6 @@ const Credits = () => {
         ))}
       </div>
 
-      {/* Modal */}
-      {showModal && selectedPlan && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center'>
-          <div className='absolute inset-0 bg-black opacity-30' onClick={() => setShowModal(false)} />
-          <div className='relative bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-lg p-6 z-60'>
-            <h3 className='text-xl font-semibold mb-2'>Confirm Purchase</h3>
-            <p className='text-sm text-gray-500 mb-4'>Confirm your purchase to get credits.</p>
-
-            <div className='mb-4'>
-              <div className='text-sm text-gray-500'>Plan</div>
-              <div className='font-medium text-lg'>{selectedPlan.name}</div>
-              <div className='text-sm text-gray-600'>Price: ₹{selectedPlan.price} • Credits: {selectedPlan.credits}</div>
-            </div>
-
-            <div className='flex items-center justify-end gap-3'>
-              <button onClick={() => setShowModal(false)} className='px-4 py-2 rounded bg-gray-100 cursor-pointer'>Cancel</button>
-              <button onClick={confirmPurchase} className='px-4 py-2 rounded bg-purple-600 text-white cursor-pointer'>Confirm Purchase</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
