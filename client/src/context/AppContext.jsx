@@ -12,7 +12,7 @@ import {
   addCredits as addCreditsLocal,
 } from '../components/creditService'
 
-axios.defaults.baseURL = import.meta.env.VITE_SERVER_URL
+axios.defaults.baseURL = import.meta.env.VITE_SERVER_URL || 'https://ravionai-server.vercel.app'
 
 
 const AppContext = createContext()
