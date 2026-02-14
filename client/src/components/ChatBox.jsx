@@ -21,6 +21,7 @@ const ChatBox = () => {
     try {
       e.preventDefault()
       if (!user) return toast('Login to send Message')
+      if (mode === 'image') return toast('Image generation will be available in the future!', { icon: '🚀' })
       setLoading(true)
       const promptCopy = prompt
       setPrompt('')
