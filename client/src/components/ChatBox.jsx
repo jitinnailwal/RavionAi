@@ -46,11 +46,12 @@ const ChatBox = () => {
         setPrompt(promptCopy)
       }
     } catch (error) {
-      toast.error(error.message)
+      const msg = error?.response?.data?.message || error.message
+      toast.error(msg)
     }finally {
       setPrompt(''),
       setLoading(false)
-      
+
     }
   }
 
