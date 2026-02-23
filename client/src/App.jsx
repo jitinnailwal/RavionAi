@@ -29,7 +29,7 @@ const App = () => {
       {user ? (
         <div className='bg-bg-deep text-primary'>
 
-          <div className='flex h-screen w-screen overflow-hidden'>
+          <div className='flex h-dvh w-screen overflow-hidden'>
             {/* Mobile overlay backdrop */}
             {isMenuOpen && (
               <div

@@ -146,10 +146,10 @@ const ChatBox = () => {
   }, [])
 
   return (
-    <div className='flex-1 flex flex-col justify-between m-3 sm:m-5 md:m-10 xl:mx-24 2xl:mx-36 max-md:mt-14 min-w-0'>
+    <div className='flex-1 flex flex-col h-dvh max-h-dvh mx-3 sm:mx-5 md:mx-10 xl:mx-24 2xl:mx-36 pt-3 sm:pt-5 md:pt-10 max-md:pt-14 pb-3 sm:pb-5 md:pb-10 min-w-0 overflow-hidden'>
 
       {/* Chat Messages  */}
-      <div className='relative flex-1 min-h-0 mb-5'>
+      <div className='relative flex-1 min-h-0 mb-3 sm:mb-5'>
         <div ref={containerRef} className='absolute inset-0 overflow-y-auto'>
           {messages.length === 0 && (
             <div className='h-full flex flex-col items-center justify-center gap-2 px-4'>
@@ -202,31 +202,31 @@ const ChatBox = () => {
 
       {/* Prompt Input Box  */}
 
-      <div>
+      <div className='shrink-0'>
         <form onSubmit={onSubmit} className='glass glow-gradient
-          rounded-full w-full max-w-2xl p-2 sm:p-3 pl-3 sm:pl-4 mx-auto flex gap-2 sm:gap-4 items-center'>
-          <select onChange={(e) => setMode(e.target.value)} value={mode} className='text-xs sm:text-sm pl-2 sm:pl-3 pr-1 sm:pr-2 outline-none bg-transparent text-primary'>
+          rounded-full w-full max-w-2xl p-2 sm:p-3 pl-3 sm:pl-4 mx-auto flex gap-1.5 sm:gap-4 items-center'>
+          <select onChange={(e) => setMode(e.target.value)} value={mode} className='text-xs sm:text-sm pl-1 sm:pl-3 pr-0.5 sm:pr-2 outline-none bg-transparent text-primary shrink-0'>
             <option className='bg-bg-surface' value="text">Text</option>
             <option className='bg-bg-surface' value="image">Image</option>
 
           </select>
-          <input onChange={(e) => setPrompt(e.target.value)} value={prompt} type="text" placeholder='Write your prompt here!'
+          <input onChange={(e) => setPrompt(e.target.value)} value={prompt} type="text" placeholder='Write your prompt...'
             className='flex-1 min-w-0 text-xs sm:text-sm outline-none bg-transparent text-primary placeholder:text-text-muted' required />
 
           {/* Mic Button */}
           <button type='button' onClick={toggleListening}
-            className={`p-1.5 rounded-full cursor-pointer transition-colors ${isListening ? 'bg-red-500/20' : 'hover:bg-bg-surface/50'}`}>
+            className={`shrink-0 p-1 sm:p-1.5 rounded-full cursor-pointer transition-colors ${isListening ? 'bg-red-500/20' : 'hover:bg-bg-surface/50'}`}>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className={`w-5 h-5 transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-text-muted'}`}>
+              className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-text-muted'}`}>
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
               <line x1="12" x2="12" y1="19" y2="22"/>
             </svg>
           </button>
 
-          <button disabled={loading}>
-            <img src={loading ? assets.stop_icon : assets.send_icon} className='w-8 cursor-pointer transform transition ease-in-out active:scale-95'
+          <button disabled={loading} className='shrink-0'>
+            <img src={loading ? assets.stop_icon : assets.send_icon} className='w-6 sm:w-8 cursor-pointer transform transition ease-in-out active:scale-95'
               alt="" />
           </button>
         </form>

@@ -39,8 +39,8 @@ const Sidebar = ({ isMenuOpen, setIsMenuOpen }) => {
     }
 
   return (
-    <div className={`flex flex-col h-screen shrink-0 p-4 glass
-  transition-all duration-300 max-md:fixed max-md:top-0 left-0 z-50 max-md:h-full max-md:shadow-2xl
+    <div className={`flex flex-col h-dvh shrink-0 p-4 glass
+  transition-all duration-300 max-md:fixed max-md:top-0 left-0 z-50 max-md:h-dvh max-md:shadow-2xl
   ${collapsed ? 'w-16' : 'w-72'} ${!isMenuOpen && 'max-md:-translate-x-full'}`}>
         {/* Logo + Toggle */}
         <div className='flex items-center justify-between'>
