@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { assets } from '../assets/assets'
 
 const Profile = () => {
-  const { user, fetchUser, token, axios } = useAppContext()
+  const { user, fetchUser, token, axios, setToken } = useAppContext()
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -209,6 +209,19 @@ const Profile = () => {
           {changingPw ? 'Changing...' : 'Change Password'}
         </button>
       </div>
+
+      {/* Logout */}
+      <button
+        onClick={() => {
+          localStorage.removeItem('token')
+          setToken(null)
+          toast.success('Successfully logged out')
+        }}
+        className='w-full mt-6 mb-8 py-3 border border-red-500/30 text-red-500 rounded-md
+        text-sm font-medium hover:bg-red-500/10 transition-colors cursor-pointer active:scale-97'
+      >
+        Logout
+      </button>
     </div>
   )
 }
