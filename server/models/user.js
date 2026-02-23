@@ -3,9 +3,12 @@ import bcrypt from 'bcryptjs'
 
 const userSchema = new mongoose.Schema({
     name: {type: String, required: true},
+    firstName: {type: String, default: ''},
+    lastName: {type: String, default: ''},
     email: {type: String, required: true, unique: true},
     password: {type: String, required: true},
     credits: {type: Number, default: 2},
+    profilePicture: {type: String, default: ''},
 })
 
 // encrypt pass before save in database

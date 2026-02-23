@@ -2,6 +2,7 @@ import User from "../models/user.js";
 import jwt from 'jsonwebtoken'
 import bcrypt from "bcryptjs";
 import Chat from "../models/Chat.js";
+import imagekit from "../configs/imageKit.js";
 
 // Generate JWT
 const generateToken = (id) => {
@@ -59,6 +60,77 @@ export const getUser = async(req, res) =>{
         return res.json({success: false, message: error.message })
     }
 }
+
+//api to get published images
+
+// API to update user profile
+export const updateProfile = async (req, res) => {
+    try {
+        const { firstName, lastName } = req.body;
+        const user = req.user;
+
+        const updateData = {};
+        if (firstName !== undefined) updateData.firstName = firstName;
+        if (lastName !== undefined) updateData.lastName = lastName;
+
+        // Update the display name as well
+        if (firstName !== undefined || lastName !== undefined) {
+            const newFirst = firstName !== undefined ? firstName : user.firstName || '';
+            const newLast = lastName !== undefined ? lastName : user.lastName || '';
+            updateData.name = `${newFirst} ${newLast}`.trim() || user.name;
+        }
+
+        await User.findByIdAndUpdate(user._id, updateData);
+        res.json({ success: true, message: 'Profile updated successfully' });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// API to change password
+export const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const user = await User.findById(req.user._id);
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.json({ success: false, message: 'Current password is incorrect' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.json({ success: false, message: 'New password must be at least 6 characters' });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// API to upload profile picture
+export const uploadProfilePicture = async (req, res) => {
+    try {
+        const { imageBase64 } = req.body;
+        if (!imageBase64) {
+            return res.json({ success: false, message: 'No image provided' });
+        }
+
+        const result = await imagekit.upload({
+            file: imageBase64,
+            fileName: `profile_${req.user._id}_${Date.now()}`,
+            folder: '/profile_pictures',
+        });
+
+        await User.findByIdAndUpdate(req.user._id, { profilePicture: result.url });
+        res.json({ success: true, url: result.url, message: 'Profile picture updated' });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
 
 //api to get published images
 

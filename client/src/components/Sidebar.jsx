@@ -131,11 +131,11 @@ const Sidebar = ({ isMenuOpen, setIsMenuOpen }) => {
       </div>
 
       {/* User Account */}
-      <div className='flex items-center gap-3 p-3 mt-4 border border-border-subtle
-      rounded-md cursor-pointer group'>
-        <img src={assets.user_icon} className='w-7 rounded-full' alt="" />
+      <div onClick={()=> {navigate('/profile'); setIsMenuOpen(false)}} className='flex items-center gap-3 p-3 mt-4 border border-border-subtle
+      rounded-md cursor-pointer group hover:bg-bg-surface/50 transition-all'>
+        <img src={user?.profilePicture || assets.user_icon} className='w-7 h-7 rounded-full object-cover' alt="" />
         <p className='flex-1 text-sm text-primary truncate'>{user ? user.name : 'Login Your Account'}</p>
-        {user && <img onClick={logout} src={assets.logout_icon} className='h-5 cursor-pointer hidden not-dark:invert group-hover:block'/>}
+        {user && <img onClick={(e)=> {e.stopPropagation(); logout()}} src={assets.logout_icon} className='h-5 cursor-pointer hidden not-dark:invert group-hover:block'/>}
 
       </div>
 
