@@ -17,7 +17,7 @@ const Message = ({ message }) => {
         //USER MESSAGE
         <div className="flex items-start justify-end my-4 gap-2">
           <div
-            className="flex flex-col gap-2 p-2 px-4 glass rounded-md max-w-2xl"
+            className="flex flex-col gap-2 p-2 px-3 sm:px-4 glass rounded-md max-w-[85%] sm:max-w-2xl"
           >
             <p className="text-sm text-primary">{message.content}</p>
             <span className="text-xs text-text-muted">
@@ -29,7 +29,7 @@ const Message = ({ message }) => {
       ) : (
         //ASSISTANT MESSAGE
         <div
-          className="inline-flex flex-col gap-2 p-2 px-4 max-w-2xl glass
+          className="inline-flex flex-col gap-2 p-2 px-3 sm:px-4 max-w-[85%] sm:max-w-2xl glass
           rounded-md my-4 border-gradient-from/20"
         >
           {message.isImage ? (
@@ -63,7 +63,7 @@ const Message = ({ message }) => {
               )}
             </>
           ) : (
-            <div className="text-sm text-primary reset-tw">
+            <div className="text-sm text-primary reset-tw overflow-x-auto">
               <Markdown>{message.content}</Markdown>
             </div>
           )}

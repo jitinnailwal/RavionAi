@@ -95,6 +95,20 @@ html, body {
   box-shadow: none;
 }
 
+/* ── Mobile sidebar: solid background instead of transparent glass ── */
+@media (max-width: 767px) {
+  .glass.z-50 {
+    background: #F8FAFC;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .dark .glass.z-50 {
+    background: #0F172A;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
 /* ── Gradient glow ── */
 .glow-gradient {
   box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 14px rgba(37,99,235,0.08);

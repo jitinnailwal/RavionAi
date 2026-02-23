@@ -30,7 +30,7 @@ const Community = () => {
   if(loading) return <Loading/>
 
   return (
-    <div className='p-6 pt-12 xl:px-12 2xl:px-20 w-full mx-auto h-full overflow-y-scroll'>
+    <div className='p-4 sm:p-6 pt-14 sm:pt-12 max-md:pt-16 xl:px-12 2xl:px-20 w-full mx-auto h-full overflow-y-scroll'>
         <h2 className='text-xl font-semibold mb-6 text-gradient'>Community Images</h2>
 
         {images.length > 0 ? (

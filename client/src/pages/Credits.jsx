@@ -23,9 +23,9 @@ const Credits = () => {
   }
 
   return (
-    <div className='max-w-7xl h-screen overflow-y-scroll mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-      <div className='flex items-center justify-between mb-8'>
-        <h2 className='text-3xl font-semibold text-gradient'>Credit Plans</h2>
+    <div className='max-w-7xl h-screen overflow-y-scroll mx-auto px-4 sm:px-6 lg:px-8 py-12 max-md:pt-16'>
+      <div className='flex items-center justify-between mb-8 gap-4'>
+        <h2 className='text-2xl sm:text-3xl font-semibold text-gradient'>Credit Plans</h2>
         <div className='text-right'>
           <div className='text-sm text-text-muted'>Your credits</div>
           <div className='text-2xl font-bold text-accent-blue'>{user?.credits ?? '—'}</div>

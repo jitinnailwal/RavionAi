@@ -100,7 +100,7 @@ const Profile = () => {
   const profileImg = user?.profilePicture || assets.user_icon
 
   return (
-    <div className='max-w-2xl h-screen overflow-y-scroll mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+    <div className='max-w-2xl h-screen overflow-y-scroll mx-auto px-4 sm:px-6 lg:px-8 py-12 max-md:pt-16'>
       <h2 className='text-3xl font-semibold text-gradient mb-8'>Profile</h2>
 
       {/* Profile Picture */}

@@ -146,14 +146,14 @@ const ChatBox = () => {
   }, [])
 
   return (
-    <div className='flex-1 flex flex-col justify-between m-5 md:m-10 xl:mx-24 2xl:mx-36 max-md:mt-14'>
+    <div className='flex-1 flex flex-col justify-between m-3 sm:m-5 md:m-10 xl:mx-24 2xl:mx-36 max-md:mt-14 min-w-0'>
 
       {/* Chat Messages  */}
       <div className='relative flex-1 min-h-0 mb-5'>
         <div ref={containerRef} className='absolute inset-0 overflow-y-auto'>
           {messages.length === 0 && (
-            <div className='h-full flex flex-col items-center justify-center gap-2'>
-              <RavionLogo size={180} />
+            <div className='h-full flex flex-col items-center justify-center gap-2 px-4'>
+              <RavionLogo size={120} />
               <p className='mt-5 text-4xl sm:text-6xl text-center text-gradient font-semibold'>
                 Start your conversation.</p>
             </div>
@@ -204,14 +204,14 @@ const ChatBox = () => {
 
       <div>
         <form onSubmit={onSubmit} className='glass glow-gradient
-          rounded-full w-full max-w-2xl p-3 pl-4 mx-auto flex gap-4 items-center'>
-          <select onChange={(e) => setMode(e.target.value)} value={mode} className='text-sm pl-3 pr-2 outline-none bg-transparent text-primary'>
+          rounded-full w-full max-w-2xl p-2 sm:p-3 pl-3 sm:pl-4 mx-auto flex gap-2 sm:gap-4 items-center'>
+          <select onChange={(e) => setMode(e.target.value)} value={mode} className='text-xs sm:text-sm pl-2 sm:pl-3 pr-1 sm:pr-2 outline-none bg-transparent text-primary'>
             <option className='bg-bg-surface' value="text">Text</option>
             <option className='bg-bg-surface' value="image">Image</option>
 
           </select>
           <input onChange={(e) => setPrompt(e.target.value)} value={prompt} type="text" placeholder='Write your prompt here!'
-            className='flex-1 w-full text-sm outline-none bg-transparent text-primary placeholder:text-text-muted' required />
+            className='flex-1 min-w-0 text-xs sm:text-sm outline-none bg-transparent text-primary placeholder:text-text-muted' required />
 
           {/* Mic Button */}
           <button type='button' onClick={toggleListening}

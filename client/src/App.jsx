@@ -24,12 +24,19 @@ const App = () => {
     <>
         <Toaster/>
       {!isMenuOpen && <img src={assets.menu_icon} className='absolute top-3 left-3 w-8 h-8
-    cursor-pointer md:hidden not-dark:invert' onClick={() => setIsMenuOpen(true)} />}
+    cursor-pointer md:hidden not-dark:invert z-30' onClick={() => setIsMenuOpen(true)} />}
 
       {user ? (
         <div className='bg-bg-deep text-primary'>
 
-          <div className='flex h-screen w-screen'>
+          <div className='flex h-screen w-screen overflow-hidden'>
+            {/* Mobile overlay backdrop */}
+            {isMenuOpen && (
+              <div
+                className='fixed inset-0 bg-black/50 z-40 md:hidden'
+                onClick={() => setIsMenuOpen(false)}
+              />
+            )}
             <Sidebar isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
             <Routes>
               <Route path='/' element={<ChatBox />} />
