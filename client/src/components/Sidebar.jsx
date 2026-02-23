@@ -12,6 +12,7 @@ const Sidebar = ({ isMenuOpen, setIsMenuOpen }) => {
 
     const {chats, setSelectedChat, theme, setTheme, user, navigate, createNewChat, axios, setChats, fetchUsersChats, setToken, token} = useAppContext()
     const [search, setSearch] = useState('')
+    const [collapsed, setCollapsed] = useState(false)
 
     const logout = () => {
       localStorage.removeItem('token')
@@ -38,14 +39,27 @@ const Sidebar = ({ isMenuOpen, setIsMenuOpen }) => {
     }
 
   return (
-    <div className={`flex flex-col h-screen w-72 shrink-0 p-4 glass
-  transition-all duration-500 max-md:absolute left-0 z-1 ${!isMenuOpen && 'max-md:-translate-x-full'}`}>
-        {/* Logo */}
-        <div className='flex items-center gap-3'>
-          <RavionLogo size={40} />
-          <span className='text-lg font-bold tracking-widest text-gradient uppercase'>Ravion AI</span>
+    <div className={`flex flex-col h-screen shrink-0 p-4 glass
+  transition-all duration-300 max-md:absolute left-0 z-1 ${collapsed ? 'w-16' : 'w-72'} ${!isMenuOpen && 'max-md:-translate-x-full'}`}>
+        {/* Logo + Toggle */}
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <RavionLogo size={40} />
+            {!collapsed && <span className='text-lg font-bold tracking-widest text-gradient uppercase'>Ravion AI</span>}
+          </div>
+          <button onClick={() => setCollapsed(!collapsed)}
+            className='p-1.5 rounded-md hover:bg-bg-surface/50 transition-colors cursor-pointer max-md:hidden'>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              className={`w-5 h-5 text-text-muted transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`}>
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
         </div>
 
+      {/* Collapsible content */}
+      {!collapsed ? (
+        <>
         {/* New Chat Button */}
 
         <button onClick={createNewChat} className='flex justify-center items-center w-full py-2 mt-10 text-white
@@ -67,7 +81,7 @@ const Sidebar = ({ isMenuOpen, setIsMenuOpen }) => {
      {/* Recent Chats  */}
      {chats.length > 0 && <p className='mt-4 text-sm text-text-muted'>Recent Chats </p>}
 
-      <div className='flex-1 overflow-y-scroll mt-3 text-sm space-y-3'>
+      <div className='flex-1 overflow-y-auto mt-3 text-sm space-y-3 min-h-0'>
         {
           chats.filter((chat)=> chat.messages[0] ? chat.messages[0]?.content.
           toLowerCase().includes(search.toLowerCase()) : chat.name.toLowerCase().
@@ -138,6 +152,38 @@ const Sidebar = ({ isMenuOpen, setIsMenuOpen }) => {
         {user && <img onClick={(e)=> {e.stopPropagation(); logout()}} src={assets.logout_icon} className='h-5 cursor-pointer hidden not-dark:invert group-hover:block'/>}
 
       </div>
+        </>
+      ) : (
+        /* Collapsed icon buttons */
+        <div className='flex flex-col items-center gap-3 mt-6 flex-1'>
+          <button onClick={createNewChat}
+            className='w-9 h-9 flex items-center justify-center rounded-md bg-gradient-to-r from-accent-blue to-accent-violet text-white cursor-pointer glow-btn active:scale-97'
+            title='New Chat'>
+            <span className='text-lg'>+</span>
+          </button>
+          <button onClick={()=> navigate('/community')}
+            className='w-9 h-9 flex items-center justify-center rounded-md border border-border-subtle hover:bg-bg-surface/50 transition-colors cursor-pointer'
+            title='Community'>
+            <img src={assets.gallery_icon} className='w-4 not-dark:invert' alt="" />
+          </button>
+          <button onClick={()=> navigate('/credits')}
+            className='w-9 h-9 flex items-center justify-center rounded-md border border-border-subtle hover:bg-bg-surface/50 transition-colors cursor-pointer'
+            title='Credits'>
+            <img src={assets.diamond_icon} className='w-4 dark:invert' alt="" />
+          </button>
+          <div className='flex-1' />
+          <button onClick={()=> setTheme(theme==='dark' ? 'light' : 'dark')}
+            className='w-9 h-9 flex items-center justify-center rounded-md border border-border-subtle hover:bg-bg-surface/50 transition-colors cursor-pointer'
+            title='Toggle Theme'>
+            <img src={assets.theme_icon} className='w-4 not-dark:invert' alt="" />
+          </button>
+          <button onClick={()=> navigate('/profile')}
+            className='w-9 h-9 flex items-center justify-center rounded-md border border-border-subtle hover:bg-bg-surface/50 transition-colors cursor-pointer'
+            title='Profile'>
+            <img src={user?.profilePicture || assets.user_icon} className='w-6 h-6 rounded-full object-cover' alt="" />
+          </button>
+        </div>
+      )}
 
       <img onClick={()=> setIsMenuOpen(false)} src={assets.close_icon} className='absolute top-3 right-3 w-5 h-5
       cursor-pointer md:hidden not-dark:invert' alt='' />

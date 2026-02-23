@@ -21,6 +21,7 @@ const ChatBox = () => {
   const [mode, setMode] = useState('text')
   const [isPublished, setIsPublished] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [showScrollBtn, setShowScrollBtn] = useState(false)
   const promptBeforeVoiceRef = useRef('')
 
   const toggleListening = () => {
@@ -108,6 +109,28 @@ const ChatBox = () => {
   }
 
 
+  const scrollToBottom = () => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: 'smooth',
+      })
+    }
+  }
+
+  const handleScroll = () => {
+    if (!containerRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current
+    setShowScrollBtn(scrollHeight - scrollTop - clientHeight > 150)
+  }
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    el.addEventListener('scroll', handleScroll)
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [])
+
   useEffect(() => {
     if (selectedChat) {
       setMessages(selectedChat.messages)
@@ -115,13 +138,7 @@ const ChatBox = () => {
   }, [selectedChat])
 
   useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTo({
-        top: containerRef.current.scrollHeight,
-        behavior: "smooth",
-
-      })
-    }
+    scrollToBottom()
   }, [messages])
 
   useEffect(() => {
@@ -132,29 +149,47 @@ const ChatBox = () => {
     <div className='flex-1 flex flex-col justify-between m-5 md:m-10 xl:mx-24 2xl:mx-36 max-md:mt-14'>
 
       {/* Chat Messages  */}
-      <div ref={containerRef} className='flex-1 mb-5 overflow-y-scroll'>
-        {messages.length === 0 && (
-          <div className='h-full flex flex-col items-center justify-center gap-2'>
-            <RavionLogo size={180} />
-            <p className='mt-5 text-4xl sm:text-6xl text-center text-gradient font-semibold'>
-              Start your conversation.</p>
-          </div>
+      <div className='relative flex-1 min-h-0 mb-5'>
+        <div ref={containerRef} className='absolute inset-0 overflow-y-auto'>
+          {messages.length === 0 && (
+            <div className='h-full flex flex-col items-center justify-center gap-2'>
+              <RavionLogo size={180} />
+              <p className='mt-5 text-4xl sm:text-6xl text-center text-gradient font-semibold'>
+                Start your conversation.</p>
+            </div>
+          )}
+
+          {messages.map((message, index) => <Message key={index} message={message} />)}
+
+          {/* Three Dots loading  */}
+          {
+            loading && <div className='loader flex items-center gap-1.5'>
+              <div className='w-1.5 h-1.5 rounded-full bg-accent-blue
+                    animate-bounce'></div>
+              <div className='w-1.5 h-1.5 rounded-full bg-accent-violet
+                    animate-bounce'></div>
+              <div className='w-1.5 h-1.5 rounded-full bg-accent-blue
+                    animate-bounce'></div>
+            </div>
+          }
+        </div>
+
+        {/* Scroll to bottom button */}
+        {showScrollBtn && (
+          <button
+            onClick={scrollToBottom}
+            className='absolute bottom-4 left-1/2 -translate-x-1/2 w-9 h-9 flex items-center justify-center
+            rounded-full glass glow-gradient cursor-pointer hover:scale-110 active:scale-95
+            transition-all duration-200 z-10'
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              className='w-5 h-5 text-accent-blue'>
+              <path d="M12 5v14" />
+              <path d="m19 12-7 7-7-7" />
+            </svg>
+          </button>
         )}
-
-        {messages.map((message, index) => <Message key={index} message={message} />)}
-
-        {/* Three Dots loading  */}
-        {
-          loading && <div className='loader flex items-center gap-1.5'>
-            <div className='w-1.5 h-1.5 rounded-full bg-accent-blue
-                  animate-bounce'></div>
-            <div className='w-1.5 h-1.5 rounded-full bg-accent-violet
-                  animate-bounce'></div>
-            <div className='w-1.5 h-1.5 rounded-full bg-accent-blue
-                  animate-bounce'></div>
-          </div>
-        }
-
       </div>
 
       {mode === 'image' && (
