@@ -3,10 +3,14 @@ import { useAppContext } from '../context/AppContext'
 import { assets } from '../assets/assets'
 import Message from './Message'
 import toast from 'react-hot-toast'
+import RavionLogo from './RavionLogo'
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
 
 const ChatBox = () => {
 
   const containerRef = useRef(null)
+  const recognitionRef = useRef(null)
 
   const { selectedChat, theme, user, axios, token, setUser } = useAppContext()
 
@@ -16,6 +20,54 @@ const ChatBox = () => {
   const [prompt, setPrompt] = useState('')
   const [mode, setMode] = useState('text')
   const [isPublished, setIsPublished] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const promptBeforeVoiceRef = useRef('')
+
+  const toggleListening = () => {
+    if (!SpeechRecognition) {
+      toast.error('Speech recognition is not supported in this browser')
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop()
+      return
+    }
+
+    // Capture the prompt text before voice starts so we can append to it
+    promptBeforeVoiceRef.current = prompt
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'en-US'
+    recognition.interimResults = true
+    recognition.continuous = false
+    recognitionRef.current = recognition
+
+    recognition.onstart = () => setIsListening(true)
+
+    recognition.onresult = (event) => {
+      let transcript = ''
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript
+      }
+      const base = promptBeforeVoiceRef.current
+      const separator = base && !base.endsWith(' ') ? ' ' : ''
+      setPrompt(base + separator + transcript)
+    }
+
+    recognition.onerror = (event) => {
+      if (event.error === 'not-allowed') {
+        toast.error('Microphone access denied. Please allow microphone permission.')
+      } else if (event.error !== 'aborted') {
+        toast.error('Speech recognition error: ' + event.error)
+      }
+      setIsListening(false)
+    }
+
+    recognition.onend = () => setIsListening(false)
+
+    recognition.start()
+  }
 
   const onSubmit = async (e) => {
     try {
@@ -63,7 +115,7 @@ const ChatBox = () => {
   }, [selectedChat])
 
   useEffect(() => {
-    if (containerRef.current) { 
+    if (containerRef.current) {
       containerRef.current.scrollTo({
         top: containerRef.current.scrollHeight,
         behavior: "smooth",
@@ -72,16 +124,19 @@ const ChatBox = () => {
     }
   }, [messages])
 
+  useEffect(() => {
+    return () => recognitionRef.current?.stop()
+  }, [])
+
   return (
-    <div className='flex-1 flex flex-col justify-between m-5 md:m-10 xl:mx-30 max-md:mt-14 2xl:pr-40'>
+    <div className='flex-1 flex flex-col justify-between m-5 md:m-10 xl:mx-24 2xl:mx-36 max-md:mt-14'>
 
       {/* Chat Messages  */}
       <div ref={containerRef} className='flex-1 mb-5 overflow-y-scroll'>
         {messages.length === 0 && (
-          <div className='h-full flex flex-col items-center justify-center gap-2 text-primary'>
-            <img src={theme === 'dark' ? assets.logo_ravion : assets.logo_ravion} alt=''
-              className='w-full max-w-56 sm:max-w-68' />
-            <p className='mt-5 text-4xl sm:text-6xl text-center text-gray-400 dark:text-white'>
+          <div className='h-full flex flex-col items-center justify-center gap-2'>
+            <RavionLogo size={180} />
+            <p className='mt-5 text-4xl sm:text-6xl text-center text-gradient font-semibold'>
               Start your conversation.</p>
           </div>
         )}
@@ -91,11 +146,11 @@ const ChatBox = () => {
         {/* Three Dots loading  */}
         {
           loading && <div className='loader flex items-center gap-1.5'>
-            <div className='w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-white 
+            <div className='w-1.5 h-1.5 rounded-full bg-accent-blue
                   animate-bounce'></div>
-            <div className='w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-white 
+            <div className='w-1.5 h-1.5 rounded-full bg-accent-violet
                   animate-bounce'></div>
-            <div className='w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-white 
+            <div className='w-1.5 h-1.5 rounded-full bg-accent-blue
                   animate-bounce'></div>
           </div>
         }
@@ -103,7 +158,7 @@ const ChatBox = () => {
       </div>
 
       {mode === 'image' && (
-        <label className='inline-flex items-center gap-3 mb-3 text-sm mx-auto'>
+        <label className='inline-flex items-center gap-3 mb-3 text-sm mx-auto text-text-muted'>
           <p className='text-xs'>Publish Generated Image to Community</p>
           <input type="checkbox" className='cursor-pointer' checked={isPublished}
             onChange={(e) => setIsPublished(e.target.checked)} />
@@ -113,15 +168,27 @@ const ChatBox = () => {
       {/* Prompt Input Box  */}
 
       <div>
-        <form onSubmit={onSubmit} className='bg-primary/20 dark:bg-[#583C79]/30 border border-primary dark:border-[#80609F]/30
+        <form onSubmit={onSubmit} className='glass glow-gradient
           rounded-full w-full max-w-2xl p-3 pl-4 mx-auto flex gap-4 items-center'>
-          <select onChange={(e) => setMode(e.target.value)} value={mode} className='text-sm pl-3 pr-2 outline-none'>
-            <option className='dark:bg-purple-900' value="text">Text</option>
-            <option className='dark:bg-purple-900' value="image">Image</option>
+          <select onChange={(e) => setMode(e.target.value)} value={mode} className='text-sm pl-3 pr-2 outline-none bg-transparent text-primary'>
+            <option className='bg-bg-surface' value="text">Text</option>
+            <option className='bg-bg-surface' value="image">Image</option>
 
           </select>
-          <input onChange={(e) => setPrompt(e.target.value)} value={prompt} type="text" placeholder='Write you prompt here !'
-            className='flex-1 w-full text-sm outline-none' required />
+          <input onChange={(e) => setPrompt(e.target.value)} value={prompt} type="text" placeholder='Write your prompt here!'
+            className='flex-1 w-full text-sm outline-none bg-transparent text-primary placeholder:text-text-muted' required />
+
+          {/* Mic Button */}
+          <button type='button' onClick={toggleListening}
+            className={`p-1.5 rounded-full cursor-pointer transition-colors ${isListening ? 'bg-red-500/20' : 'hover:bg-bg-surface/50'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              className={`w-5 h-5 transition-colors ${isListening ? 'text-red-500 animate-pulse' : 'text-text-muted'}`}>
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+          </button>
 
           <button disabled={loading}>
             <img src={loading ? assets.stop_icon : assets.send_icon} className='w-8 cursor-pointer transform transition ease-in-out active:scale-95'

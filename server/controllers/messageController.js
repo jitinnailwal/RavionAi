@@ -67,18 +67,10 @@ export const textMessageController = async (req, res) => {
             console.error("Credit refund failed:", refundError.message)
         }
 
-        // Return a readable error message
-        let message = "Something went wrong"
-        const status = error?.status || error?.httpStatusCode || error?.code
-        if (status === 429) {
-            message = "API rate limit reached. Please wait a moment and try again."
-        } else if (status === 400) {
-            message = "API request failed. Please try again."
-        } else if (error.message) {
-            message = error.message
-        }
+        const errMsg = error?.errorDetails?.[0]?.message || error?.message || "Something went wrong"
+        console.error("Full error object:", JSON.stringify(error, null, 2));
 
-        res.json({ success: false, message })
+        res.json({ success: false, message: errMsg })
     }
 }
 
