@@ -160,7 +160,7 @@ const ChatBox = () => {
             </div>
           )}
 
-          {messages.map((message, index) => <Message key={index} message={message} />)}
+          {messages.map((message, index) => <Message key={index} message={message} chatId={selectedChat?._id} />)}
 
           {/* Three Dots loading  */}
           {

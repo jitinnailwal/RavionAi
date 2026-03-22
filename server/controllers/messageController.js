@@ -230,3 +230,32 @@ export const imageMessageController = async (req, res) => {
         res.json({ success: false, message: error?.message || "Something went wrong" })
     }
 }
+
+export const togglePublishController = async (req, res) => {
+    try {
+        const userId = req.user._id
+        const { chatId, messageId } = req.body
+
+        if (!chatId || !messageId) {
+            return res.json({ success: false, message: "Chat ID and Message ID are required" })
+        }
+
+        const chat = await Chat.findOne({ userId, _id: chatId })
+        if (!chat) {
+            return res.json({ success: false, message: "Chat not found" })
+        }
+
+        const message = chat.messages.id(messageId)
+        if (!message || !message.isImage) {
+            return res.json({ success: false, message: "Image message not found" })
+        }
+
+        message.isPublished = !message.isPublished
+        await chat.save()
+
+        res.json({ success: true, isPublished: message.isPublished })
+    } catch (error) {
+        console.error("Toggle publish error:", error.message)
+        res.json({ success: false, message: "Something went wrong" })
+    }
+}
