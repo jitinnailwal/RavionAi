@@ -133,20 +133,31 @@ export const imageMessageController = async (req, res) => {
         const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID
         const cfApiToken = process.env.CLOUDFLARE_API_TOKEN
 
-        const cfRes = await axios.post(
-            `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
-            { prompt },
-            {
-                headers: {
-                    Authorization: `Bearer ${cfApiToken}`,
-                    "Content-Type": "application/json",
-                },
-                timeout: 30000,
-            }
-        )
+        if (!cfAccountId || !cfApiToken) {
+            throw new Error("Image generation is not configured. Missing Cloudflare credentials.")
+        }
+
+        let cfRes
+        try {
+            cfRes = await axios.post(
+                `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+                { prompt },
+                {
+                    headers: {
+                        Authorization: `Bearer ${cfApiToken}`,
+                        "Content-Type": "application/json",
+                    },
+                    timeout: 30000,
+                }
+            )
+        } catch (cfError) {
+            console.error("Cloudflare API error:", cfError?.response?.status, JSON.stringify(cfError?.response?.data));
+            throw new Error(cfError?.response?.data?.errors?.[0]?.message || `Cloudflare API error: ${cfError?.response?.status || cfError.message}`)
+        }
 
         const b64 = cfRes.data?.result?.image
         if (!b64) {
+            console.error("Cloudflare unexpected response:", JSON.stringify(cfRes.data));
             throw new Error("No image was generated. Try a different prompt.")
         }
 
