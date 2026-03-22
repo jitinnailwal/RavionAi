@@ -8,10 +8,12 @@ const Login = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { axios, setToken } = useAppContext();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     const url = state === "login" ? "/api/user/login" : "/api/user/register";
 
     try {
@@ -24,6 +26,8 @@ const Login = () => {
       }
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -175,10 +179,19 @@ const Login = () => {
           {/* Submit Button */}
           <button
             type="submit"
+            disabled={isLoading}
             className="w-full py-3 rounded-lg bg-gradient-to-r from-accent-blue to-accent-violet
-            text-white font-semibold text-lg glow-btn cursor-pointer"
+            text-white font-semibold text-lg glow-btn cursor-pointer flex items-center justify-center gap-2
+            disabled:opacity-70 disabled:cursor-not-allowed transition-opacity"
           >
-            {state === "register" ? "Create Account" : "Login"}
+            {isLoading ? (
+              <>
+                <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
+                {state === "register" ? "Creating Account..." : "Logging in..."}
+              </>
+            ) : (
+              state === "register" ? "Create Account" : "Login"
+            )}
           </button>
         </form>
         </div>

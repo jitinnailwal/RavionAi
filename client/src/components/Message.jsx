@@ -1,10 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, memo } from "react";
 import { assets } from "../assets/assets";
-import moment from "moment";
 import Markdown from "react-markdown";
 import Prism from "prismjs";
 
-const Message = ({ message }) => {
+// Lightweight relative time formatter - replaces moment.js
+const timeAgo = (timestamp) => {
+  const seconds = Math.floor((Date.now() - new Date(timestamp)) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mo ago`;
+  return `${Math.floor(months / 12)}y ago`;
+};
+
+const Message = memo(({ message }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -21,7 +35,7 @@ const Message = ({ message }) => {
           >
             <p className="text-sm text-primary">{message.content}</p>
             <span className="text-xs text-text-muted">
-              {moment(message.timestamp).fromNow()}
+              {timeAgo(message.timestamp)}
             </span>
           </div>
           <img src={assets.user_icon} alt="" className="w-8 rounded-full" />
@@ -51,7 +65,7 @@ const Message = ({ message }) => {
                     src={message.content}
                     alt="AI generated large"
                     className="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl"
-                    onClick={(e) => e.stopPropagation()} // prevent closing when clicking on image
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <button
                     onClick={() => setIsModalOpen(false)}
@@ -69,12 +83,14 @@ const Message = ({ message }) => {
           )}
 
           <span className="text-xs text-text-muted">
-            {moment(message.timestamp).fromNow()}
+            {timeAgo(message.timestamp)}
           </span>
         </div>
       )}
     </div>
   );
-};
+});
+
+Message.displayName = "Message";
 
 export default Message;

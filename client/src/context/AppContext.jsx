@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 // import { dummyChats, dummyUserData } from "../assets/assets";
 import axios from 'axios'
@@ -28,7 +28,7 @@ export const AppContextProvider = ({ children }) => {
 
     const [loadingUser, setLoadingUser] = useState(true)
 
-    const fetchUser = async () => {
+    const fetchUser = useCallback(async () => {
         try {
            const { data } = await axios.get('/api/user/data', {headers: {Authorization: token}})
             if(data.success){
@@ -41,29 +41,21 @@ export const AppContextProvider = ({ children }) => {
         }finally{
             setLoadingUser(false)
         }
-    }
+    }, [token])
 
-    const createNewChat = async () => {
-        try {
-
-            if(!user) return toast("Login to create a new chat")
-            navigate('/')
-        await axios.get('api/chat/create', {headers: {Authorization: token}})
-        await fetchUsersChats()
-        } catch (error) {
-            toast.error(error.message)
-        }
-    }
-
-    const fetchUsersChats = async () => {
+    const fetchUsersChats = useCallback(async () => {
         try {
             const {data} = await axios.get('/api/chat/get', {headers: {Authorization: token}})
             if(data.success){
                 setChats(data.chats)
-                // if user has no chat , create one
                 if(data.chats.length === 0){
-                    await createNewChat();
-                    return fetchUsersChats
+                    // Create a new chat inline instead of circular dependency
+                    await axios.get('api/chat/create', {headers: {Authorization: token}})
+                    const {data: refreshed} = await axios.get('/api/chat/get', {headers: {Authorization: token}})
+                    if(refreshed.success && refreshed.chats.length > 0){
+                        setChats(refreshed.chats)
+                        setSelectedChat(refreshed.chats[0])
+                    }
                 }else{
                     setSelectedChat(data.chats[0])
                 }
@@ -74,7 +66,18 @@ export const AppContextProvider = ({ children }) => {
         } catch (error) {
             toast.error(error.message)
         }
-    }
+    }, [token])
+
+    const createNewChat = useCallback(async () => {
+        try {
+            if(!user) return toast("Login to create a new chat")
+            navigate('/')
+            await axios.get('api/chat/create', {headers: {Authorization: token}})
+            await fetchUsersChats()
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }, [user, token, fetchUsersChats, navigate])
 
     useEffect(()=> {
         if(theme === 'dark'){
@@ -126,7 +129,7 @@ export const AppContextProvider = ({ children }) => {
     }, [])
 
     // Minimal purchase helper: persist to server if logged in, else local-only
-    const purchaseCreditsLocal = async (amount) => {
+    const purchaseCreditsLocal = useCallback(async (amount) => {
       const n = Number(amount || 0)
       if (!n || n <= 0) {
         toast.error('Invalid amount')
@@ -162,14 +165,13 @@ export const AppContextProvider = ({ children }) => {
         toast.error('Could not save credits locally.')
         return null
       }
-    }
+    }, [token])
 
-    const value = {
+    const value = useMemo(() => ({
         navigate, user, setUser, fetchUser, chats, setChats, selectedChat, setSelectedChat, theme, setTheme,
         createNewChat, loadingUser, setToken, fetchUsersChats, token, axios,
-        // expose minimal credit helper
         purchaseCreditsLocal,
-    }
+    }), [navigate, user, chats, selectedChat, theme, createNewChat, loadingUser, token, fetchUser, fetchUsersChats, purchaseCreditsLocal])
 
     return (
         <AppContext.Provider value={value}>

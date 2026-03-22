@@ -12,7 +12,7 @@ const ChatBox = () => {
   const containerRef = useRef(null)
   const recognitionRef = useRef(null)
 
-  const { selectedChat, theme, user, axios, token, setUser } = useAppContext()
+  const { selectedChat, theme, user, axios, token, setUser, navigate } = useAppContext()
 
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
@@ -25,6 +25,7 @@ const ChatBox = () => {
   const promptBeforeVoiceRef = useRef('')
 
   const toggleListening = () => {
+    if (!user) return navigate('/login')
     if (!SpeechRecognition) {
       toast.error('Speech recognition is not supported in this browser')
       return
@@ -73,7 +74,7 @@ const ChatBox = () => {
   const onSubmit = async (e) => {
     try {
       e.preventDefault()
-      if (!user) return toast('Login to send Message')
+      if (!user) return navigate('/login')
       if (mode === 'image') return toast('Image generation will be available in the future!', { icon: '🚀' })
       setLoading(true)
       const promptCopy = prompt
