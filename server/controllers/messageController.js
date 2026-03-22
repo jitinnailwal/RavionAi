@@ -133,7 +133,7 @@ export const imageMessageController = async (req, res) => {
         const encodedPrompt = encodeURIComponent(prompt)
         const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=800&nologo=true&seed=${Date.now()}`
 
-        const imageResponse = await axios.get(pollinationsUrl, { responseType: "arraybuffer", timeout: 60000 })
+        const imageResponse = await axios.get(pollinationsUrl, { responseType: "arraybuffer", timeout: 55000, maxRedirects: 5 })
 
         const base64Image = `data:image/png;base64,${Buffer.from(imageResponse.data).toString('base64')}`
 
