@@ -141,42 +141,57 @@ export const imageMessageController = async (req, res) => {
         const cfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`
         console.log("Calling Cloudflare AI with prompt:", prompt.substring(0, 100))
 
-        let cfRes
-        const cfBody = { prompt, steps: 4 }
-        const cfConfig = {
-            headers: {
-                Authorization: `Bearer ${cfApiToken}`,
-                "Content-Type": "application/json",
-            },
-            timeout: 50000,
-            maxContentLength: 10 * 1024 * 1024,
-            maxBodyLength: 10 * 1024 * 1024,
-        }
-
-        // Retry up to 2 times on 500 errors (Cloudflare can be flaky from serverless IPs)
+        // Use native fetch for better compatibility with serverless environments
+        let cfData
         for (let attempt = 0; attempt <= 2; attempt++) {
+            const controller = new AbortController()
+            const timeout = setTimeout(() => controller.abort(), 50000)
+
             try {
-                cfRes = await axios.post(cfUrl, cfBody, cfConfig)
+                const cfRes = await fetch(cfUrl, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${cfApiToken}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ prompt, steps: 4 }),
+                    signal: controller.signal,
+                })
+                clearTimeout(timeout)
+
+                if (!cfRes.ok) {
+                    const errText = await cfRes.text().catch(() => "no body")
+                    console.error(`Cloudflare attempt ${attempt + 1} failed | status: ${cfRes.status} | body: ${errText.substring(0, 300)}`)
+                    if (cfRes.status >= 500 && attempt < 2) {
+                        console.log("Retrying Cloudflare in 2s...")
+                        await sleep(2000)
+                        continue
+                    }
+                    throw new Error(`Cloudflare error ${cfRes.status}: ${errText.substring(0, 100)}`)
+                }
+
+                cfData = await cfRes.json()
                 break
-            } catch (cfError) {
-                const status = cfError?.response?.status
-                console.error(`Cloudflare attempt ${attempt + 1} failed:`, cfError.message, "| status:", status)
-                console.error("Cloudflare response data:", JSON.stringify(cfError?.response?.data))
-                if (status === 500 && attempt < 2) {
-                    console.log("Retrying Cloudflare in 2s...")
+            } catch (fetchErr) {
+                clearTimeout(timeout)
+                if (fetchErr.name === "AbortError") {
+                    console.error(`Cloudflare attempt ${attempt + 1} timed out`)
+                } else if (!fetchErr.message.startsWith("Cloudflare error")) {
+                    console.error(`Cloudflare attempt ${attempt + 1} fetch error:`, fetchErr.message)
+                }
+                if (attempt < 2) {
                     await sleep(2000)
                     continue
                 }
-                throw new Error("Image generation failed. Please try again.")
+                throw new Error(fetchErr.message || "Image generation failed. Please try again.")
             }
         }
 
-        console.log("Cloudflare response status:", cfRes.status)
-        console.log("Cloudflare response keys:", JSON.stringify(Object.keys(cfRes.data || {})))
+        console.log("Cloudflare response keys:", JSON.stringify(Object.keys(cfData || {})))
 
-        const b64 = cfRes.data?.result?.image
+        const b64 = cfData?.result?.image
         if (!b64) {
-            console.error("No image in Cloudflare response. Full response:", JSON.stringify(cfRes.data).substring(0, 500))
+            console.error("No image in Cloudflare response. Full response:", JSON.stringify(cfData).substring(0, 500))
             throw new Error("No image was generated. Try a different prompt.")
         }
 
