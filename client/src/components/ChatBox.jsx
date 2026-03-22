@@ -204,7 +204,7 @@ const ChatBox = () => {
       {/* Prompt Input Box  */}
 
       <div className='shrink-0'>
-        <form onSubmit={onSubmit} className='glass glow-gradient
+        <form onSubmit={onSubmit} className='glass
           rounded-full w-full max-w-2xl p-2 sm:p-3 pl-3 sm:pl-4 mx-auto flex gap-1.5 sm:gap-4 items-center'>
           <select onChange={(e) => setMode(e.target.value)} value={mode} className='text-xs sm:text-sm pl-1 sm:pl-3 pr-0.5 sm:pr-2 outline-none bg-transparent text-primary shrink-0'>
             <option className='bg-bg-surface' value="text">Text</option>

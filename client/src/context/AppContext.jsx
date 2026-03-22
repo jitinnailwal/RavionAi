@@ -37,7 +37,14 @@ export const AppContextProvider = ({ children }) => {
                 toast.error(data.message)
             }
         } catch (error) {
-            toast.error(error.message)
+            // If 401, token is invalid/expired — clear it
+            if (error?.response?.status === 401) {
+                localStorage.removeItem('token')
+                setToken(null)
+                setUser(null)
+            } else {
+                toast.error(error.message)
+            }
         }finally{
             setLoadingUser(false)
         }

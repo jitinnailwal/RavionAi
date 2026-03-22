@@ -134,38 +134,49 @@ export const imageMessageController = async (req, res) => {
         const cfApiToken = process.env.CLOUDFLARE_API_TOKEN
 
         if (!cfAccountId || !cfApiToken) {
+            console.error("Missing Cloudflare credentials. CLOUDFLARE_ACCOUNT_ID:", !!cfAccountId, "CLOUDFLARE_API_TOKEN:", !!cfApiToken)
             throw new Error("Image generation is not configured. Missing Cloudflare credentials.")
         }
 
         const cfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`
-        console.log("Calling Cloudflare AI:", cfUrl.replace(cfAccountId, "***"))
+        console.log("Calling Cloudflare AI with prompt:", prompt.substring(0, 100))
 
-        const cfRes = await axios.post(
-            cfUrl,
-            { prompt, width: 512, height: 512 },
-            {
-                headers: {
-                    Authorization: `Bearer ${cfApiToken}`,
-                    "Content-Type": "application/json",
-                },
-                timeout: 50000,
-                maxContentLength: 10 * 1024 * 1024,
-                maxBodyLength: 10 * 1024 * 1024,
-            }
-        )
+        let cfRes
+        try {
+            cfRes = await axios.post(
+                cfUrl,
+                { prompt, steps: 4 },
+                {
+                    headers: {
+                        Authorization: `Bearer ${cfApiToken}`,
+                        "Content-Type": "application/json",
+                    },
+                    timeout: 120000,
+                    maxContentLength: 10 * 1024 * 1024,
+                    maxBodyLength: 10 * 1024 * 1024,
+                }
+            )
+        } catch (cfError) {
+            console.error("Cloudflare API error:", cfError.message)
+            console.error("Cloudflare status:", cfError?.response?.status)
+            console.error("Cloudflare response data:", JSON.stringify(cfError?.response?.data))
+            throw new Error("Image generation failed. Please try again.")
+        }
 
-        console.log("Cloudflare response status:", cfRes.status, "has image:", !!cfRes.data?.result?.image)
+        console.log("Cloudflare response status:", cfRes.status)
+        console.log("Cloudflare response keys:", JSON.stringify(Object.keys(cfRes.data || {})))
 
         const b64 = cfRes.data?.result?.image
         if (!b64) {
+            console.error("No image in Cloudflare response. Full response:", JSON.stringify(cfRes.data).substring(0, 500))
             throw new Error("No image was generated. Try a different prompt.")
         }
 
-        const base64Image = `data:image/jpeg;base64,${b64}`
+        console.log("Cloudflare image received, size:", b64.length, "chars")
 
-        // Upload to ImageKit for persistent hosting
+        // Upload to ImageKit for persistent hosting (keeps MongoDB docs small)
         const uploadResponse = await imagekit.upload({
-            file: base64Image,
+            file: `data:image/png;base64,${b64}`,
             fileName: `${Date.now()}.png`,
             folder: "ravionai"
         })
@@ -184,12 +195,7 @@ export const imageMessageController = async (req, res) => {
         res.json({ success: true, reply })
 
     } catch (error) {
-        const cfStatus = error?.response?.status
-        const cfBody = error?.response?.data
-        console.error("Image Generation Error:", error.message, "| CF status:", cfStatus);
-        if (cfBody) {
-            try { console.error("CF response body:", typeof cfBody === 'string' ? cfBody.slice(0, 500) : JSON.stringify(cfBody).slice(0, 500)) } catch (e) {}
-        }
+        console.error("Image Generation Error:", error.message);
 
         // Refund credits on failure
         try {
@@ -198,7 +204,6 @@ export const imageMessageController = async (req, res) => {
             console.error("Credit refund failed:", refundError.message)
         }
 
-        const errMsg = cfBody?.errors?.[0]?.message || error?.message || "Something went wrong"
-        res.json({ success: false, message: errMsg })
+        res.json({ success: false, message: error?.message || "Something went wrong" })
     }
 }
