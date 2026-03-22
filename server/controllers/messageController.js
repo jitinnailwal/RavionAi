@@ -89,7 +89,7 @@ export const textMessageController = async (req, res) => {
     }
 }
 
-// Image Generation message controller (Together AI - FLUX.1 Schnell Free)
+// Image Generation message controller (Cloudflare Workers AI - FLUX.1 Schnell)
 export const imageMessageController = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -129,32 +129,24 @@ export const imageMessageController = async (req, res) => {
             isImage: false
         });
 
-        // Generate image via Together AI (FLUX.1 Schnell Free)
-        const togetherRes = await axios.post(
-            "https://api.together.xyz/v1/images/generations",
-            {
-                model: "black-forest-labs/FLUX.1-schnell-Free",
-                prompt,
-                width: 1024,
-                height: 1024,
-                n: 1,
-                response_format: "b64_json",
-            },
+        // Generate image via Cloudflare Workers AI (FLUX.1 Schnell)
+        const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID
+        const cfApiToken = process.env.CLOUDFLARE_API_TOKEN
+
+        const cfRes = await axios.post(
+            `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+            { prompt },
             {
                 headers: {
-                    Authorization: `Bearer ${process.env.TOGETHER_API_KEY}`,
+                    Authorization: `Bearer ${cfApiToken}`,
                     "Content-Type": "application/json",
                 },
+                responseType: "arraybuffer",
                 timeout: 30000,
             }
         )
 
-        const b64 = togetherRes.data?.data?.[0]?.b64_json
-        if (!b64) {
-            throw new Error("No image was generated. Try a different prompt.")
-        }
-
-        const base64Image = `data:image/png;base64,${b64}`
+        const base64Image = `data:image/png;base64,${Buffer.from(cfRes.data).toString('base64')}`
 
         // Upload to ImageKit for persistent hosting
         const uploadResponse = await imagekit.upload({
@@ -186,7 +178,7 @@ export const imageMessageController = async (req, res) => {
             console.error("Credit refund failed:", refundError.message)
         }
 
-        const errMsg = error?.response?.data?.error?.message || error?.message || "Something went wrong"
+        const errMsg = error?.response?.data?.errors?.[0]?.message || error?.message || "Something went wrong"
         res.json({ success: false, message: errMsg })
     }
 }
