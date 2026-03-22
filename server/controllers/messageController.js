@@ -145,13 +145,13 @@ export const imageMessageController = async (req, res) => {
         try {
             cfRes = await axios.post(
                 cfUrl,
-                { prompt, steps: 4 },
+                { prompt, steps: 4, width: 512, height: 512 },
                 {
                     headers: {
                         Authorization: `Bearer ${cfApiToken}`,
                         "Content-Type": "application/json",
                     },
-                    timeout: 120000,
+                    timeout: 50000,
                     maxContentLength: 10 * 1024 * 1024,
                     maxBodyLength: 10 * 1024 * 1024,
                 }
