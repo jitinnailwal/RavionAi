@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 import RavionLogo from "../components/RavionLogo";
@@ -9,6 +10,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   const { axios, setToken } = useAppContext();
 
   const handleSubmit = async (e) => {
@@ -21,6 +23,7 @@ const Login = () => {
       if (data.success) {
         setToken(data.token);
         localStorage.setItem("token", data.token);
+        navigate("/");
       } else {
         toast.error(data.message);
       }
