@@ -142,25 +142,33 @@ export const imageMessageController = async (req, res) => {
         console.log("Calling Cloudflare AI with prompt:", prompt.substring(0, 100))
 
         let cfRes
-        try {
-            cfRes = await axios.post(
-                cfUrl,
-                { prompt, steps: 4, width: 512, height: 512 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${cfApiToken}`,
-                        "Content-Type": "application/json",
-                    },
-                    timeout: 50000,
-                    maxContentLength: 10 * 1024 * 1024,
-                    maxBodyLength: 10 * 1024 * 1024,
+        const cfBody = { prompt, steps: 4 }
+        const cfConfig = {
+            headers: {
+                Authorization: `Bearer ${cfApiToken}`,
+                "Content-Type": "application/json",
+            },
+            timeout: 50000,
+            maxContentLength: 10 * 1024 * 1024,
+            maxBodyLength: 10 * 1024 * 1024,
+        }
+
+        // Retry up to 2 times on 500 errors (Cloudflare can be flaky from serverless IPs)
+        for (let attempt = 0; attempt <= 2; attempt++) {
+            try {
+                cfRes = await axios.post(cfUrl, cfBody, cfConfig)
+                break
+            } catch (cfError) {
+                const status = cfError?.response?.status
+                console.error(`Cloudflare attempt ${attempt + 1} failed:`, cfError.message, "| status:", status)
+                console.error("Cloudflare response data:", JSON.stringify(cfError?.response?.data))
+                if (status === 500 && attempt < 2) {
+                    console.log("Retrying Cloudflare in 2s...")
+                    await sleep(2000)
+                    continue
                 }
-            )
-        } catch (cfError) {
-            console.error("Cloudflare API error:", cfError.message)
-            console.error("Cloudflare status:", cfError?.response?.status)
-            console.error("Cloudflare response data:", JSON.stringify(cfError?.response?.data))
-            throw new Error("Image generation failed. Please try again.")
+                throw new Error("Image generation failed. Please try again.")
+            }
         }
 
         console.log("Cloudflare response status:", cfRes.status)
