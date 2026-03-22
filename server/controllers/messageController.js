@@ -141,12 +141,16 @@ export const imageMessageController = async (req, res) => {
                     Authorization: `Bearer ${cfApiToken}`,
                     "Content-Type": "application/json",
                 },
-                responseType: "arraybuffer",
                 timeout: 30000,
             }
         )
 
-        const base64Image = `data:image/png;base64,${Buffer.from(cfRes.data).toString('base64')}`
+        const b64 = cfRes.data?.result?.image
+        if (!b64) {
+            throw new Error("No image was generated. Try a different prompt.")
+        }
+
+        const base64Image = `data:image/jpeg;base64,${b64}`
 
         // Upload to ImageKit for persistent hosting
         const uploadResponse = await imagekit.upload({
