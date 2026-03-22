@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
     lastName: {type: String, default: ''},
     email: {type: String, required: true, unique: true},
     password: {type: String, required: true},
-    credits: {type: Number, default: 2},
+    credits: {type: Number, default: 6},
     profilePicture: {type: String, default: ''},
 })
 
