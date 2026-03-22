@@ -134,7 +134,7 @@ export const imageMessageController = async (req, res) => {
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
                 const response = await ai.models.generateContent({
-                    model: "gemini-2.5-flash-preview-image-generation",
+                    model: "gemini-2.5-flash-image",
                     contents: prompt,
                     config: {
                         responseModalities: ["TEXT", "IMAGE"],
