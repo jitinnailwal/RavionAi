@@ -4,12 +4,27 @@ import User from "../models/user.js"
 import imagekit from "../configs/imageKit.js"
 import ai from "../configs/openai.js"
 
-const callGemini = async (prompt) => {
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-    });
-    return response.text;
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+const callGemini = async (prompt, retries = 3) => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: prompt,
+            });
+            return response.text;
+        } catch (error) {
+            const is429 = error?.status === 429 || error?.httpStatusCode === 429 ||
+                error?.code === 'RESOURCE_EXHAUSTED'
+            if (is429 && attempt < retries) {
+                // Wait longer each retry: 3s, 6s, 12s
+                await sleep(3000 * Math.pow(2, attempt))
+                continue
+            }
+            throw error
+        }
+    }
 }
 
 export const textMessageController = async (req, res) => {

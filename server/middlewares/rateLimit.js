@@ -1,23 +1,35 @@
-// Per-user rate limiter — allows 1 request at a time per user for message endpoints.
-// If a user already has a request in-flight, subsequent requests are rejected instantly.
+import mongoose from "mongoose"
 
-const activeRequests = new Map() // userId -> true
+// MongoDB-based lock — works across Vercel serverless instances.
+// Only 1 Gemini request per user at a time.
+const lockSchema = new mongoose.Schema({
+    userId: { type: String, required: true, unique: true },
+    createdAt: { type: Date, default: Date.now, expires: 120 } // auto-expire after 2min (safety net)
+})
 
-export const oneAtATime = (req, res, next) => {
+const Lock = mongoose.models.Lock || mongoose.model("Lock", lockSchema)
+
+export const oneAtATime = async (req, res, next) => {
     const userId = req.user?._id?.toString()
     if (!userId) return next()
 
-    if (activeRequests.has(userId)) {
-        return res.json({
-            success: false,
-            message: "Please wait for the current response before sending another message"
-        })
+    try {
+        // Try to insert a lock — fails if one already exists for this user
+        await Lock.create({ userId })
+    } catch (err) {
+        if (err.code === 11000) {
+            // Duplicate key = user already has an active request
+            return res.json({
+                success: false,
+                message: "Please wait for the current response before sending another message"
+            })
+        }
+        // Some other DB error — let the request through rather than blocking
+        return next()
     }
 
-    activeRequests.set(userId, true)
-
-    // Clean up when the response finishes (success or error)
-    const cleanup = () => activeRequests.delete(userId)
+    // Clean up lock when the response finishes
+    const cleanup = () => Lock.deleteOne({ userId }).catch(() => {})
     res.on('finish', cleanup)
     res.on('close', cleanup)
 
