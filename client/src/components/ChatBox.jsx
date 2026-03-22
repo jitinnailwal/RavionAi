@@ -75,6 +75,7 @@ const ChatBox = () => {
     try {
       e.preventDefault()
       if (!user) return navigate('/login')
+      if (loading) return
       if (mode === 'image') return toast('Image generation will be available in the future!', { icon: '🚀' })
       setLoading(true)
       const promptCopy = prompt
