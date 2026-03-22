@@ -137,27 +137,27 @@ export const imageMessageController = async (req, res) => {
             throw new Error("Image generation is not configured. Missing Cloudflare credentials.")
         }
 
-        let cfRes
-        try {
-            cfRes = await axios.post(
-                `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
-                { prompt },
-                {
-                    headers: {
-                        Authorization: `Bearer ${cfApiToken}`,
-                        "Content-Type": "application/json",
-                    },
-                    timeout: 30000,
-                }
-            )
-        } catch (cfError) {
-            console.error("Cloudflare API error:", cfError?.response?.status, JSON.stringify(cfError?.response?.data));
-            throw new Error(cfError?.response?.data?.errors?.[0]?.message || `Cloudflare API error: ${cfError?.response?.status || cfError.message}`)
-        }
+        const cfUrl = `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`
+        console.log("Calling Cloudflare AI:", cfUrl.replace(cfAccountId, "***"))
+
+        const cfRes = await axios.post(
+            cfUrl,
+            { prompt, width: 512, height: 512 },
+            {
+                headers: {
+                    Authorization: `Bearer ${cfApiToken}`,
+                    "Content-Type": "application/json",
+                },
+                timeout: 50000,
+                maxContentLength: 10 * 1024 * 1024,
+                maxBodyLength: 10 * 1024 * 1024,
+            }
+        )
+
+        console.log("Cloudflare response status:", cfRes.status, "has image:", !!cfRes.data?.result?.image)
 
         const b64 = cfRes.data?.result?.image
         if (!b64) {
-            console.error("Cloudflare unexpected response:", JSON.stringify(cfRes.data));
             throw new Error("No image was generated. Try a different prompt.")
         }
 
@@ -184,7 +184,12 @@ export const imageMessageController = async (req, res) => {
         res.json({ success: true, reply })
 
     } catch (error) {
-        console.error("Image Generation Error:", error.message);
+        const cfStatus = error?.response?.status
+        const cfBody = error?.response?.data
+        console.error("Image Generation Error:", error.message, "| CF status:", cfStatus);
+        if (cfBody) {
+            try { console.error("CF response body:", typeof cfBody === 'string' ? cfBody.slice(0, 500) : JSON.stringify(cfBody).slice(0, 500)) } catch (e) {}
+        }
 
         // Refund credits on failure
         try {
@@ -193,7 +198,7 @@ export const imageMessageController = async (req, res) => {
             console.error("Credit refund failed:", refundError.message)
         }
 
-        const errMsg = error?.response?.data?.errors?.[0]?.message || error?.message || "Something went wrong"
+        const errMsg = cfBody?.errors?.[0]?.message || error?.message || "Something went wrong"
         res.json({ success: false, message: errMsg })
     }
 }
