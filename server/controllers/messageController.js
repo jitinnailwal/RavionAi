@@ -1,3 +1,4 @@
+import axios from "axios"
 import Chat from "../models/Chat.js"
 import User from "../models/user.js"
 import imagekit from "../configs/imageKit.js"
@@ -88,7 +89,7 @@ export const textMessageController = async (req, res) => {
     }
 }
 
-// Image Generation message controller (Gemini 2.5 Flash Image)
+// Image Generation message controller (Pollinations.ai - free, no API key)
 export const imageMessageController = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -128,40 +129,15 @@ export const imageMessageController = async (req, res) => {
             isImage: false
         });
 
-        // Call Gemini image generation with retry for 429
-        let imageData = null
-        const retries = 3
-        for (let attempt = 0; attempt <= retries; attempt++) {
-            try {
-                const response = await ai.models.generateContent({
-                    model: "gemini-2.5-flash-image",
-                    contents: prompt,
-                    config: {
-                        responseModalities: ["TEXT", "IMAGE"],
-                    },
-                })
+        // Generate image via Pollinations.ai (free, no API key needed)
+        const encodedPrompt = encodeURIComponent(prompt)
+        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=800&nologo=true&seed=${Date.now()}`
 
-                // Extract image from response parts
-                const parts = response.candidates?.[0]?.content?.parts || []
-                const imagePart = parts.find(p => p.inlineData)
-                if (!imagePart) {
-                    throw new Error("No image was generated. Try a different prompt.")
-                }
-                imageData = imagePart.inlineData
-                break
-            } catch (error) {
-                const is429 = error?.status === 429 || error?.httpStatusCode === 429 ||
-                    error?.code === 'RESOURCE_EXHAUSTED'
-                if (is429 && attempt < retries) {
-                    await sleep(3000 * Math.pow(2, attempt))
-                    continue
-                }
-                throw error
-            }
-        }
+        const imageResponse = await axios.get(pollinationsUrl, { responseType: "arraybuffer", timeout: 60000 })
+
+        const base64Image = `data:image/png;base64,${Buffer.from(imageResponse.data).toString('base64')}`
 
         // Upload to ImageKit for persistent hosting
-        const base64Image = `data:${imageData.mimeType};base64,${imageData.data}`
         const uploadResponse = await imagekit.upload({
             file: base64Image,
             fileName: `${Date.now()}.png`,
@@ -191,7 +167,6 @@ export const imageMessageController = async (req, res) => {
             console.error("Credit refund failed:", refundError.message)
         }
 
-        const errMsg = error?.errorDetails?.[0]?.message || error?.message || "Something went wrong"
-        res.json({ success: false, message: errMsg })
+        res.json({ success: false, message: error.message || "Something went wrong" })
     }
 }
