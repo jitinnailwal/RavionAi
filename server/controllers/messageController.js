@@ -89,7 +89,7 @@ export const textMessageController = async (req, res) => {
     }
 }
 
-// Image Generation message controller (Pollinations.ai - free, no API key)
+// Image Generation message controller (Together AI - FLUX.1 Schnell Free)
 export const imageMessageController = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -129,13 +129,32 @@ export const imageMessageController = async (req, res) => {
             isImage: false
         });
 
-        // Generate image via Pollinations.ai (free, no API key needed)
-        const encodedPrompt = encodeURIComponent(prompt)
-        const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=800&height=800&nologo=true&seed=${Date.now()}`
+        // Generate image via Together AI (FLUX.1 Schnell Free)
+        const togetherRes = await axios.post(
+            "https://api.together.xyz/v1/images/generations",
+            {
+                model: "black-forest-labs/FLUX.1-schnell-Free",
+                prompt,
+                width: 1024,
+                height: 1024,
+                n: 1,
+                response_format: "b64_json",
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.TOGETHER_API_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                timeout: 30000,
+            }
+        )
 
-        const imageResponse = await axios.get(pollinationsUrl, { responseType: "arraybuffer", timeout: 55000, maxRedirects: 5 })
+        const b64 = togetherRes.data?.data?.[0]?.b64_json
+        if (!b64) {
+            throw new Error("No image was generated. Try a different prompt.")
+        }
 
-        const base64Image = `data:image/png;base64,${Buffer.from(imageResponse.data).toString('base64')}`
+        const base64Image = `data:image/png;base64,${b64}`
 
         // Upload to ImageKit for persistent hosting
         const uploadResponse = await imagekit.upload({
@@ -167,6 +186,7 @@ export const imageMessageController = async (req, res) => {
             console.error("Credit refund failed:", refundError.message)
         }
 
-        res.json({ success: false, message: error.message || "Something went wrong" })
+        const errMsg = error?.response?.data?.error?.message || error?.message || "Something went wrong"
+        res.json({ success: false, message: errMsg })
     }
 }
