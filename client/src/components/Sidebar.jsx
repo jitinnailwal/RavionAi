@@ -30,6 +30,7 @@ const Sidebar = ({ isMenuOpen, setIsMenuOpen }) => {
     const logout = () => {
       localStorage.removeItem('token')
       setToken(null)
+      navigate('/')
       toast.success('Successfully logged out')
     }
 

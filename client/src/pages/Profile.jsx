@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { assets } from '../assets/assets'
 
 const Profile = () => {
-  const { user, fetchUser, token, axios, setToken } = useAppContext()
+  const { user, fetchUser, token, axios, setToken, navigate } = useAppContext()
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -215,6 +215,7 @@ const Profile = () => {
         onClick={() => {
           localStorage.removeItem('token')
           setToken(null)
+          navigate('/')
           toast.success('Successfully logged out')
         }}
         className='w-full mt-6 mb-8 py-3 border border-red-500/30 text-red-500 rounded-md
